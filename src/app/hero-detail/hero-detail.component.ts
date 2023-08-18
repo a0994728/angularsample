@@ -30,4 +30,10 @@ export class HeroDetailComponent {
   ngOnInit() {
     this.getHero();
   }
+
+  save(): void {
+    if (this.hero) {
+      this.heroService.updateHero(this.hero).subscribe(() => this.goBack());
+    }
+  }
 }
