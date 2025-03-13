@@ -1,9 +1,6 @@
-version: "3"
 services:
-  node:
-    build: ./
+  web:
+    build: .
     ports:
-      - "4200:4200"
-    volumes:
-      - ".:/projects"
+      - 4200:4200
     tty: true
