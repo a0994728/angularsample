@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Hero } from './hero';
 import { HEROES } from './modk-heroes';
-import { Observable, catchError, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 import { MessageService } from './message.service';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 
@@ -60,10 +60,52 @@ export class HeroService {
     );
   }
 
-  addHero(hero: Hero): Observable<any> {
-    return this.http.post<Hero>(this.heroesUrl, hero, this.httpOptions).pipe(
-      tap((newHero: Hero) => this.log(`addHero hero w/ id=${newHero.id}`)),
-      catchError(this.handleError<any>(`addHero`))
+  addHero(name: string): Observable<any> {
+    return this.http
+      .post<Hero>(this.heroesUrl, { name }, this.httpOptions)
+      .pipe(
+        tap((newHero: Hero) => this.log(`added hero w/ id=${newHero.id}`)),
+        catchError(this.handleError<any>(`addHero`))
+      );
+  }
+
+  deleteHero(id: number): Observable<any> {
+    const url = `${this.heroesUrl}/${id}`;
+    return this.http.delete<Hero>(url, this.httpOptions).pipe(
+      tap((_) => this.log(`deleted hero id=${id}`)),
+      catchError(this.handleError<Hero>('deleteHero'))
+    );
+  }
+
+  searchHeroes(term: string): Observable<Hero[]> {
+    if (!term.trim()) {
+      return of([]);
+    }
+
+    return this.http.get<Hero[]>(`${this.heroesUrl}/?name=${term}`).pipe(
+      tap((_) => this.log(`found heroes matching "${term}"`)),
+      tap((heroes) => this.log(`"${term}" match ${heroes.length} heroes`)),
+      catchError(this.handleError<Hero[]>('searchHeroes', []))
+    );
+  }
+
+  getHeroNo404<Data>(id: string): Observable<Hero | null> {
+    if (!id.trim()) {
+      return of(null);
+    }
+    const num = Number(id);
+    if (Number.isNaN(num)) {
+      return of(null).pipe(tap((_) => this.log('please enter valid numbers')));
+    }
+    const url = `${this.heroesUrl}/?id=${num}`;
+
+    return this.http.get<Hero[]>(url).pipe(
+      map((heroes) => heroes[0]),
+      tap((h) => {
+        const outLine = h ? 'fetch' : 'cannot be found';
+        this.log(`${outLine} hero id=${num}`);
+      }),
+      catchError(this.handleError<Hero>(`getHero id=${num}`))
     );
   }
 }
